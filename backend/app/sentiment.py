@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from typing import Any, Optional
+from urllib.parse import quote
 
 import requests
 
@@ -19,10 +20,12 @@ class SentimentResult:
 class SentimentAnalyzer:
     def __init__(self) -> None:
         self._model_id = os.getenv("HF_API_MODEL_ID", DEFAULT_MODEL_ID)
-        self._api_url = os.getenv("HF_API_URL", f"https://api-inference.huggingface.co/models/{self._model_id}")
+        encoded_model_id = quote(self._model_id, safe="/")
+        default_url = f"https://router.huggingface.co/hf-inference/models/{encoded_model_id}"
+        self._api_url = os.getenv("HF_API_URL", default_url)
         self._timeout = float(os.getenv("HF_API_TIMEOUT", "30"))
         self._session = requests.Session()
-        self._token = os.getenv("HF_API_TOKEN")
+        self._token = os.getenv("HF_API_TOKEN") or os.getenv("HF_TOKEN")
 
     def analyze(self, text: str) -> SentimentResult:
         text = (text or "").strip()
